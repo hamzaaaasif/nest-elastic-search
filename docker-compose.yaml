@@ -1,0 +1,63 @@
+version: '3.8'
+services: 
+  api: 
+    container_name: nest-test-container
+    build: 
+      dockerfile: Dockerfile 
+      context: . 
+    ports: 
+      - '8080:8080'
+    volumes: 
+      - /usr/src/app 
+      - /usr/src/app/node_modules 
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: postgres
+      ENV: development
+      PORT: 8080
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX: public_search
+    depends_on:
+      - postgres 
+      - elasticsearch
+
+  postgres: 
+    image: postgres:15.4
+    restart: always 
+    container_name: postgres-database 
+    volumes:
+      - data:/var/lib/postgresql/data
+    environment:
+      - "POSTGRES_DB=postgres"
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
+    ports:
+      - '5432:5432'
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.1
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.1
+    container_name: kibana
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+
+volumes:
+  data:
+  es_data:
